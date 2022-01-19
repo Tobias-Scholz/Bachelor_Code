@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  cassandra1:
+    image: cassandra:latest
+    ports: 
+      - 9042:9042
+  # cassandra2:
+  #   image: cassandra:latest
+  #   ports: 
+  #     - 9043:9042
+  #   environment:
+  #     - CASSANDRA_SEEDS=cassandra1
