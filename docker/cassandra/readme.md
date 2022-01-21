@@ -1,3 +1,5 @@
+    cqlsh
+
     CREATE KEYSPACE messages WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};
 
     CREATE TABLE IF NOT EXISTS messages.messages (deviceId TEXT, payload TEXT, timestamp TIMESTAMP, PRIMARY KEY(deviceId, timestamp));

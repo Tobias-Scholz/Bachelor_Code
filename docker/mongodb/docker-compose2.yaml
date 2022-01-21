@@ -1,0 +1,31 @@
+version: '3'
+services:
+  mongocfg1:
+    container_name: mongocfg1
+    network_mode: host
+    image: mongo
+    command: mongod --configsvr --replSet mongors1conf --port 27020 --bind_ip 0.0.0.0
+    environment:
+      TERM: xterm
+    expose:
+      - "27020"
+
+  mongorsn1:
+    container_name: mongors1n1
+    network_mode: host
+    image: mongo
+    command: mongod --shardsvr --replSet mongors_1 --port 27017
+    expose:
+      - "27017"
+    environment:
+      TERM: xterm
+
+  mongos1:
+    container_name: mongos1
+    network_mode: host
+    image: mongo
+    depends_on:
+      - mongocfg1
+    command: mongos --configdb mongors1conf/10.0.0.69:27020 --port 27019 --bind_ip 0.0.0.0
+    expose:
+      - "27019"

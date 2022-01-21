@@ -1,0 +1,30 @@
+version: '2'
+
+services:
+  access_node:
+    image: timescale/timescaledb:latest-pg14
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=timescaledb
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST_AUTH_METHOD=trust  
+      - max_prepared_transactions=0    
+  timescale1:
+    image: timescale/timescaledb:latest-pg14
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=timescaledb
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - max_prepared_transactions=0 
+  timescale2:
+    image: timescale/timescaledb:latest-pg14
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=timescaledb
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - max_prepared_transactions=0 

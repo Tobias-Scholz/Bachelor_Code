@@ -13,3 +13,11 @@
     docker exec -it mongors1n1 bash -c "echo 'db.createCollection(\"messages\")' | mongo "
 
     docker exec -it mongos1 bash -c "echo 'sh.shardCollection(\"test.messages\", {\"deviceId\" : \"hashed\"})' | mongo "
+
+
+
+    docker exec -it mongocfg1 bash -c "echo 'rs.initiate({_id:      \"mongors1conf\",configsvr: true, members: [{ _id : 0, host : \"10.0.0.69:27020\" }]})' | mongo"
+
+    docker exec -it mongors1n1 bash -c "echo 'rs.initiate({_id : \"mongors_1\", members: [{ _id : 0, host : \"10.0.0.58:27017\" }]})' | mongo 10.0.0.58:27017"
+
+    docker exec -it mongos1 bash -c "echo 'sh.addShard(\"mongors_1/10.0.0.58:27017\")' | mongo 10.0.0.69:27019"
