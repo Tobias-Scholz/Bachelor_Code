@@ -2,9 +2,22 @@ const { MongoClient } = require('mongodb')
 var crypto = require('crypto')
 var CronJob = require('cron').CronJob
 
-const url = 'mongodb://3.67.113.239:27019/test'
+const url = 'mongodb://3.64.47.95:27019/test'
 const client = new MongoClient(url, { w: 0 })
 const dbName = 'test'
+
+module.exports.connect = (ip) => {
+  let client = new MongoClient(`mongodb://${ip}:27019/test`, { w: 0 })
+  console.log('Connected successfully to server')
+  const db = client.db(dbName)
+  messages = db.collection('messages')
+  return client
+}
+
+module.exports.clear = async (client) => {
+  await messages.deleteMany({})
+  console.log((await messages.find().toArray()).length)
+}
 
 let messages
 ;(async () => {
@@ -15,19 +28,8 @@ let messages
 
   await messages.deleteMany({})
   console.log((await messages.find().toArray()).length)
-
-  //   let workers = []
-  //   for (let i = 0; i < 100; i++) {
-  //     workers.push(new Worker('./worker.js'))
-  //   }
-
-  //   workers.forEach((worker) =>
-  //     worker.on('message', (result) => {
-  //       console.log(result)
-  //     })
-  //   )
-
-  //   workers.forEach((worker) => worker.postMessage('message'))
+  // wait 2 seconds
+  await new Promise((resolve) => setTimeout(resolve, 2000))
 
   benchmark2()
 })()
@@ -37,36 +39,33 @@ let messages
 async function benchmark2() {
   console.log('start')
 
-  let start = performance.now()
+  let results = []
 
-  let count = 15000
+  for (let i = 0; i < 100; i++) {
+    let start = performance.now()
+    let count = 5000
 
-  let inserts = []
-  for (let i = 0; i < count; i++) {
-    inserts.push(messages.insertOne(generateData()))
+    let inserts = []
+    for (let i = 0; i < count; i++) {
+      inserts.push(messages.insertOne(generateData()))
+    }
+
+    await Promise.all(inserts)
+
+    let res = count / ((performance.now() - start) / 1000)
+    if (i > 10) {
+      results.push(res)
+      const sum = results.reduce((a, b) => a + b, 0)
+      const avg = sum / results.length || 0
+      console.log('avg: ', avg)
+    }
+    console.log(res)
   }
-
-  await Promise.all(inserts)
-
-  console.log(count / ((performance.now() - start) / 1000))
-}
-
-async function benchmark() {
-  console.log('start')
-  let counter = 0
-  let time = Date.now()
-
-  while (Date.now() - time < 10000) {
-    await messages.insertOne(generateData())
-    counter++
-  }
-
-  console.log('finished', counter)
 }
 
 function generateData() {
   return {
-    deviceId: crypto.randomBytes(20).toString('hex'),
+    device: crypto.randomBytes(20).toString('hex'),
     payload: crypto.randomBytes(100).toString('hex'),
     timestamp: new Date()
   }
@@ -77,3 +76,8 @@ function generateData() {
   2 Nodes: 48752
   1 Node : 46740
 */
+
+// 3 Clients
+// 1 Node:   6.381
+// 2 Nodes:  6.474
+// 3 Nodes:  6.435

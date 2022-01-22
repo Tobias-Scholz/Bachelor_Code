@@ -1,3 +1,7 @@
+    docker run --name cassandra1 -d -e CASSANDRA_BROADCAST_ADDRESS=10.0.0.69 -p 7000:7000 -p 9042:9042 cassandra:latest
+    docker run --name cassandra2 -d -e CASSANDRA_BROADCAST_ADDRESS=10.0.0.58 -e CASSANDRA_SEEDS=10.0.0.69 -p 7000:7000 -p 9042:9042 cassandra:latest
+    docker run --name cassandra3 -d -e CASSANDRA_BROADCAST_ADDRESS=10.0.0.110 -e CASSANDRA_SEEDS=10.0.0.69 -p 7000:7000 -p 9042:9042 cassandra:latest
+
     cqlsh
 
     CREATE KEYSPACE messages WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};
