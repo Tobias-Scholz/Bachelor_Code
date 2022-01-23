@@ -1,5 +1,8 @@
 var argv = require('minimist')(process.argv.slice(2))
-const cassandra = require('./indexCassandra')
+const cassandra = require('./cassandra')
+const mongodb = require('./mongo')
+const timescale = require('./timescale')
+const crypto = require('crypto')
 
 const databaseSelection = argv.database
 const test = argv.test
@@ -7,23 +10,32 @@ const test = argv.test
 let client
 let database
 
-let ipsCassandra = ['3.68.199.80:9042']
-let ipMongo = []
-let ipTimescale = []
+let ipsCassandra = ['3.68.199.80:9042', '3.71.11.199:9042']
+let ipMongo = ['3.68.199.80']
+let ipTimescale = ['3.68.199.80']
+
+let deviceIds = []
+for (let i = 0; i < 1000; i++) {
+  deviceIds.push(crypto.randomBytes(20).toString('hex'))
+}
 
 if (databaseSelection === 'cassandra') {
-  client = cassandra.connect()
+  client = cassandra.connect(ipsCassandra)
   database = cassandra
 } else if (databaseSelection === 'mongodb') {
+  client = mongodb.connect(ipMongo)
+  database = mongodb
 } else if (databaseSelection === 'timescale') {
+  client = timescale.connect(ipTimescale)
+  database = timescale
 }
 
 ;(async () => {
-  await database.clear(client)
-  // wait 2 seconds
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
   if (test === 'throughput') {
+    await database.clear(client)
+    // wait 2 seconds
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
     console.log('start')
 
     let results = []
@@ -34,7 +46,7 @@ if (databaseSelection === 'cassandra') {
 
       let inserts = []
       for (let i = 0; i < count; i++) {
-        inserts.push(cassandra.insert(client))
+        inserts.push(database.insert(client, deviceIds[Math.floor(Math.random() * deviceIds.length)]))
       }
 
       await Promise.all(inserts)
@@ -48,5 +60,81 @@ if (databaseSelection === 'cassandra') {
       }
       console.log(res)
     }
+  } else if (test === 'default_scenario') {
+    //await generateHistory()
+
+    setInterval(() => {
+      database.insert(client, deviceIds[Math.floor(Math.random() * deviceIds.length)])
+    }, 2)
+
+    setInterval(() => {
+      database.readRandom(client, deviceIds[Math.floor(Math.random() * deviceIds.length)], randomDate())
+    }, 500)
+  } else if (test === 'latency') {
+    let results = []
+    let deviceIds = await database.distinctDeviceIds(client)
+
+    for (let i = 0; i < 1000; i++) {
+      let start = performance.now()
+
+      await database.readRandom(client, deviceIds[Math.floor(Math.random() * deviceIds.length)], randomDate())
+
+      results.push(performance.now() - start)
+
+      if (i % 100 === 0) console.log(i)
+    }
+
+    const sum = results.reduce((a, b) => a + b, 0)
+    const avg = sum / results.length || 0
+    console.log('avg: ', avg)
+  } else if (test === 'disk_usage') {
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    await generateHistory(argv.document_count)
   }
 })()
+
+async function generateHistory(c) {
+  await database.clear(client)
+  // wait 2 seconds
+  await new Promise((resolve) => setTimeout(resolve, 2000))
+
+  const count = c || 3000000
+  const startDate = new Date()
+  startDate.setMonth(startDate.getMonth() - 1)
+  startDate.setHours(0, 0, 0, 0)
+
+  let start = startDate.getTime()
+  let end = new Date().getTime()
+
+  let batchSize = 10000
+  let batch = []
+
+  for (let i = 0; i < count; i++) {
+    let t = i / count
+
+    let interpolatedValue = end * t + start * (1 - t)
+
+    let date = new Date(interpolatedValue)
+
+    batch.push({
+      deviceId: deviceIds[Math.floor(Math.random() * deviceIds.length)],
+      payload: crypto.randomBytes(100).toString('hex'),
+      timestamp: date
+    })
+
+    if (batch.length === batchSize) {
+      await database.insertMany(client, batch)
+      batch = []
+      console.log(i)
+    }
+  }
+}
+
+function randomDate() {
+  const startDate = new Date()
+  startDate.setMonth(startDate.getMonth() - 1)
+  startDate.setHours(0, 0, 0, 0)
+
+  return new Date(startDate.getTime() + Math.random() * (new Date().getTime() - startDate.getTime()))
+}
