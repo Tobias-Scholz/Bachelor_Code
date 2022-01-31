@@ -1,3 +1,5 @@
+    docker exec -it timescale_access_node_1 bash
+
     psql postgres://timescaledb:password@localhost:5432
 
     vi /var/lib/postgresql/data/postgresql.conf
@@ -13,14 +15,6 @@
     SELECT add_data_node('dn1', host => '10.0.0.58');
     SELECT add_data_node('dn2', host => '10.0.0.110');
 
-    sudo nano /etc/postgresql/14/main/postgresql.conf
-    sudo nano /etc/postgresql/14/main/pg_hba.conf
-
-    psql -h 10.0.0.58 -U postgres
-
-    sudo su -
-    /etc/init.d/postgresql restart
-
     CREATE TABLE IF NOT EXISTS messages (
         device TEXT,
         payload TEXT,
@@ -32,5 +26,4 @@
     SELECT create_distributed_hypertable('messages','timestamp', 'device');
 
     INSERT INTO messages (device, payload, timestamp) VALUES ('abc', 'def', '2018-04-01')
-
     CREATE INDEX ON messages (timestamp DESC, device);

@@ -1,0 +1,9 @@
+version: '3'
+services:
+  mongos1:
+    container_name: mongos2
+    network_mode: host
+    image: mongo
+    command: mongos --configdb mongors1conf/18.194.173.228:27020 --port 27017 --bind_ip 0.0.0.0
+    expose:
+      - '27017'

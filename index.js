@@ -10,9 +10,9 @@ const test = argv.test
 let client
 let database
 
-let ipsCassandra = ['3.68.199.80:9042', '3.71.11.199:9042']
-let ipMongo = ['3.68.199.80']
-let ipTimescale = ['3.68.199.80']
+let ipsCassandra = ['35.159.39.19:9042', '3.70.161.46:9042']
+let ipMongo = ['35.159.39.19']
+let ipTimescale = ['35.159.39.19']
 
 let deviceIds = []
 for (let i = 0; i < 1000; i++) {
@@ -46,7 +46,7 @@ if (databaseSelection === 'cassandra') {
 
       let inserts = []
       for (let i = 0; i < count; i++) {
-        inserts.push(database.insert(client, deviceIds[Math.floor(Math.random() * deviceIds.length)]))
+        inserts.push(database.insert(client, crypto.randomBytes(20).toString('hex')))
       }
 
       await Promise.all(inserts)
@@ -61,14 +61,14 @@ if (databaseSelection === 'cassandra') {
       console.log(res)
     }
   } else if (test === 'default_scenario') {
-    //await generateHistory()
+    await generateHistory()
 
     setInterval(() => {
       database.insert(client, deviceIds[Math.floor(Math.random() * deviceIds.length)])
     }, 2)
 
     setInterval(() => {
-      database.readRandom(client, deviceIds[Math.floor(Math.random() * deviceIds.length)], randomDate())
+      database.readTest2(client, deviceIds[Math.floor(Math.random() * deviceIds.length)], randomDate())
     }, 500)
   } else if (test === 'latency') {
     let results = []
@@ -77,16 +77,46 @@ if (databaseSelection === 'cassandra') {
     for (let i = 0; i < 1000; i++) {
       let start = performance.now()
 
-      await database.readRandom(client, deviceIds[Math.floor(Math.random() * deviceIds.length)], randomDate())
+      await database.readTest1(client, deviceIds[Math.floor(Math.random() * deviceIds.length)])
 
       results.push(performance.now() - start)
 
       if (i % 100 === 0) console.log(i)
     }
 
-    const sum = results.reduce((a, b) => a + b, 0)
-    const avg = sum / results.length || 0
-    console.log('avg: ', avg)
+    console.log(calculate(results))
+
+    results = []
+
+    for (let i = 0; i < 1000; i++) {
+      let start = performance.now()
+
+      await database.readTest2(client, deviceIds[Math.floor(Math.random() * deviceIds.length)], randomDate())
+
+      results.push(performance.now() - start)
+
+      if (i % 100 === 0) console.log(i)
+    }
+
+    console.log(calculate(results))
+
+    results = []
+
+    for (let i = 0; i < 1000; i++) {
+      let start = performance.now()
+
+      await database.readTest3(
+        client,
+        deviceIds[Math.floor(Math.random() * deviceIds.length)],
+        randomIntFromInterval(100, 1000)
+      )
+
+      results.push(performance.now() - start)
+
+      if (i % 100 === 0) console.log(i)
+    }
+
+    console.log(calculate(results))
   } else if (test === 'disk_usage') {
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
@@ -137,4 +167,20 @@ function randomDate() {
   startDate.setHours(0, 0, 0, 0)
 
   return new Date(startDate.getTime() + Math.random() * (new Date().getTime() - startDate.getTime()))
+}
+
+function randomIntFromInterval(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+function calculate(data) {
+  const sum = data.reduce((a, b) => a + b, 0)
+  const avg = sum / data.length || 0
+  return { avg, std: getStandardDeviation(data) }
+}
+
+function getStandardDeviation(array) {
+  const n = array.length
+  const mean = array.reduce((a, b) => a + b) / n
+  return Math.sqrt(array.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
 }
