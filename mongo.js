@@ -14,7 +14,7 @@ const messagesSchema = new mongoose.Schema({
 })
 
 module.exports.connect = (ip) => {
-  let client = mongoose.connect(`mongodb://${ip}:27019/test`)
+  let client = mongoose.connect(`mongodb://${ip}:27019/test`, { w: 0 })
   console.log('Connected successfully to server')
   messages = mongoose.model('messages', messagesSchema)
 
@@ -27,7 +27,7 @@ module.exports.clear = async (client) => {
 }
 
 module.exports.insert = async (client, deviceId) => {
-  return messages.insertOne({
+  return mongoose.connection.db.collection('messages').insertOne({
     deviceId,
     payload: crypto.randomBytes(100).toString('hex'),
     timestamp: new Date()
@@ -35,7 +35,7 @@ module.exports.insert = async (client, deviceId) => {
 }
 
 module.exports.insertMany = async (client, batch) => {
-  return messages.insertMany(batch).lean()
+  return mongoose.connection.db.collection('messages').insertMany(batch)
 }
 
 module.exports.readTest1 = async (client, deviceId) => {

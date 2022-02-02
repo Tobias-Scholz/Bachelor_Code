@@ -121,6 +121,8 @@ if (databaseSelection === 'cassandra') {
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     await generateHistory(argv.document_count)
+  } else if (test === 'clear') {
+    await database.clear(client)
   }
 })()
 
@@ -137,7 +139,7 @@ async function generateHistory(c) {
   let start = startDate.getTime()
   let end = new Date().getTime()
 
-  let batchSize = 10000
+  let batchSize = 1000
   let batch = []
 
   for (let i = 0; i < count; i++) {

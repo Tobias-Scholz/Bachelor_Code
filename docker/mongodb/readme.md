@@ -46,3 +46,12 @@
     docker exec -it mongors1n1 bash -c "echo 'use test' | mongo 10.0.0.69:27017"
     docker exec -it mongos1 bash -c "echo 'sh.enableSharding(\"test\")' | mongo 10.0.0.160:27019 "
     docker exec -it mongos1 bash -c "echo 'sh.shardCollection(\"test.messages\", {\"deviceId\" : \"hashed\"})' | mongo 10.0.0.160:27019 "
+
+
+    // Compact
+
+    docker exec -it mongors1n1 bash -c "echo 'db.runCommand( { compact : \"messages\", force: true } )' | mongo 10.0.0.58:27017"
+    docker exec -it mongors2n1 bash -c "echo 'db.runCommand( { compact : \"messages\", force: true } )' | mongo 10.0.0.110:27017"
+
+
+    docker exec -it mongors1n1 bash -c "echo 'db.repairDatabase()' | mongo 10.0.0.58:27017"
