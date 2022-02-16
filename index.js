@@ -40,7 +40,7 @@ if (databaseSelection === 'cassandra') {
 
     let results = []
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
       let start = performance.now()
       let count = 15000
 
@@ -60,6 +60,8 @@ if (databaseSelection === 'cassandra') {
       }
       console.log(res)
     }
+
+    console.log(calculate(results))
   } else if (test === 'default_scenario') {
     await generateHistory()
 
@@ -74,7 +76,7 @@ if (databaseSelection === 'cassandra') {
     let results = []
     let deviceIds = await database.distinctDeviceIds(client)
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 10000; i++) {
       let start = performance.now()
 
       await database.readTest1(client, deviceIds[Math.floor(Math.random() * deviceIds.length)])
@@ -88,7 +90,7 @@ if (databaseSelection === 'cassandra') {
 
     results = []
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 10000; i++) {
       let start = performance.now()
 
       await database.readTest2(client, deviceIds[Math.floor(Math.random() * deviceIds.length)], randomDate())
@@ -102,7 +104,7 @@ if (databaseSelection === 'cassandra') {
 
     results = []
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 10000; i++) {
       let start = performance.now()
 
       await database.readTest3(

@@ -48,8 +48,3 @@ module.exports.distinctDeviceIds = async (client) => {
   let result = await client.query(query4)
   return result.rows.map((row) => row.device)
 }
-
-// 3 Clients
-// 1 Node:    4.543
-// 2 Nodes:   1.593
-// 3 Nodes:
